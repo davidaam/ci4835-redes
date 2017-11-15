@@ -31,4 +31,4 @@ int send_atm_message(atm_message* message, int socket);
  * @param  port  Puerto del SVR
  * @return int   File descriptor del socket
  */
-int connect_to_svr(char* ip, uint16_t port);
+int connect_to_svr(int socket, char* ip, uint16_t port);
