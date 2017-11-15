@@ -117,6 +117,9 @@ int main(int argc, char *argv[]) {
           puts("Fallo al recibir respuesta del servidor.");
           break;
       }
+
+      puts("Respuesta del servidor :");
+      puts(server_reply);
     }
   }
 
