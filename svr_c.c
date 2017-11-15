@@ -57,9 +57,7 @@ int main(int argc, char *argv[]) {
   }
 
   if (port_flag && dir_flag)
-  {
-    continue;
-  }
+  {}
   else {
     printf("Argumentos insuficientes.\n");
     return 1;
@@ -85,9 +83,9 @@ int main(int argc, char *argv[]) {
   }
   printf("Socket creado correctamente.\n\n" );
 
-  socket_dir.sin_addr.s_addr = inet_addr(argv[1]);
+  socket_dir.sin_addr.s_addr = inet_addr(dir);
   socket_dir.sin_family = AF_INET;
-  socket_dir.sin_port = htons( (intptr_t)argv[2] ); // se castea a este tipo porque si no, da un warning
+  socket_dir.sin_port = htons( (intptr_t)port ); // se castea a este tipo porque si no, da un warning
 
   return 0;
 }
