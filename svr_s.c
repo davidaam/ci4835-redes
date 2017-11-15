@@ -21,11 +21,11 @@ int main(int argc, char *argv[]) {
     switch (option) {
        case 'l' :
           dir_flag = 1;
-          dir =  optarg;
+          port =  atoi (optarg);
           break;
        case 'b' :
           log_flag = 1;
-          port = atoi (optarg);
+          dir = optarg;
           break;
        default:
            break;
@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
   // Se llena la estructura con la información correspondiente
   server.sin_family = AF_INET;
   server.sin_addr.s_addr = INADDR_ANY;
-  server.sin_port = htons( port );
+  server.sin_port = htons( (intptr_t)port );
    
   // Binding
   if( bind(socket_desc,(struct sockaddr *)&server , sizeof(server)) < 0)
