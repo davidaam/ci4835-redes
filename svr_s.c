@@ -102,32 +102,29 @@ int main(int argc, char *argv[]) {
 
 
 /*
- * This will handle connection for each client
+ * Manejador de la conexión con el cliente
  * */
 void *connection_handler(void *socket_desc)
 {
-    //Get the socket descriptor
+    // Descriptor del socket
     int sock = *(int*)socket_desc;
     int read_size;
     char *message , client_message[2000];
      
-    //Send some messages to the client
-    message = "Greetings! I am your connection handler\n";
+    // Envía notificación de que el servidor espera un mensaje
+    message = "Servidor en espera de mensaje...\n";
     write(sock , message , strlen(message));
-     
-    message = "Now type something and i shall repeat what you type \n";
-    write(sock , message , strlen(message));
-     
-    //Receive a message from client
+
+    // Recibir un mensaje del cliente
     while( (read_size = recv(sock , client_message , 2000 , 0)) > 0 )
     {
         //Send the message back to client
-        write(sock , client_message , strlen(client_message));
+        write(sock , "Mensaje recibido.", strlen("Mensaje recibido."));
     }
      
     if(read_size == 0)
     {
-        puts("Client disconnected");
+        puts("Cliente desconectado.");
         fflush(stdout);
     }
     else if(read_size == -1)
@@ -135,7 +132,7 @@ void *connection_handler(void *socket_desc)
         perror("recv failed");
     }
          
-    //Free the socket pointer
+    // Libera el apuntador al socket
     free(socket_desc);
      
     return 0;
