@@ -13,7 +13,7 @@ atm_message* read_atm_message(atm_message* message) {
   int atm_id, event_code;
   char event[1000], event_time[21];
   struct tm tm;
-  scanf(" 0%21s%4d %1000[^\n]s", event_time, &atm_id, event);
+  scanf(" 0%19s%4d %1000[^\n]s", event_time, &atm_id, event);
 
   message->atm_id = atm_id;
   message->event = malloc(strlen(event));
