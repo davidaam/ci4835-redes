@@ -30,7 +30,8 @@ atm_message* read_atm_message(atm_message* message) {
 }
 
 int main(int argc, char *argv[]) {
-    
+  
+
   char *dir;
   int port;
   int port_client;
@@ -94,6 +95,12 @@ int main(int argc, char *argv[]) {
     }
      
     puts("Conexión con el servidor exitosa.\n");
+
+  while (1) {
+    atm_message message;
+    read_atm_message(&message);
+    //send_atm_message(&message, socket_descr);
+  }
 
   return 0;
 }
