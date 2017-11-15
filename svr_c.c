@@ -30,12 +30,41 @@ atm_message* read_atm_message(atm_message* message) {
 }
 
 int main(int argc, char *argv[]) {
-  
-  if (argc < 3)
+    
+  char *dir;
+  int port;
+  int port_client;
+  int option = 0;
+  int port_flag = 0;
+  int dir_flag = 0;
+
+  while ((option = getopt(argc, argv,"d:p:l:")) != -1) {
+    switch (option) {
+       case 'd' : 
+          dir_flag = 1;
+          dir =  optarg;
+          break;
+       case 'p' : 
+          port_flag = 1;
+          port = atoi (optarg);
+          break;
+       case 'l' : 
+          port_client = atoi (optarg); 
+          break;
+       default:  
+           break;
+    }
+  }
+
+  if (port_flag && dir_flag)
   {
-    printf("Número de parámetros insuficiente.\n");
+    continue;
+  }
+  else {
+    printf("Argumentos insuficientes.\n");
     return 1;
   }
+    
 
   atm_message message;
   read_atm_message(&message);
@@ -56,6 +85,9 @@ int main(int argc, char *argv[]) {
   }
   printf("Socket creado correctamente.\n\n" );
 
+  socket_dir.sin_addr.s_addr = inet_addr(argv[1]);
+  socket_dir.sin_family = AF_INET;
+  socket_dir.sin_port = htons( (intptr_t)argv[2] ); // se castea a este tipo porque si no, da un warning
 
   return 0;
 }
