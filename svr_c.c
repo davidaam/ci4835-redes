@@ -87,5 +87,13 @@ int main(int argc, char *argv[]) {
   socket_dir.sin_family = AF_INET;
   socket_dir.sin_port = htons( (intptr_t)port ); // se castea a este tipo porque si no, da un warning
 
+  if (connect(socket_descr , (struct sockaddr *)&socket_dir , sizeof(socket_dir)) < 0)
+    {
+        perror("Conexión con el servidor fallida. \n \n");
+        return 1;
+    }
+     
+    puts("Conexión con el servidor exitosa.\n");
+
   return 0;
 }
