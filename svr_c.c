@@ -102,5 +102,7 @@ int main(int argc, char *argv[]) {
     //send_atm_message(&message, socket_descr);
   }
 
+  close(socket_descr);
+
   return 0;
 }
