@@ -13,7 +13,7 @@ atm_message* read_atm_message(atm_message* message) {
   int atm_id, event_code;
   char event[1000], event_time[21];
   struct tm tm;
-  scanf("0%21s%4d %1000[^\n]s", event_time, &atm_id, event);
+  scanf(" 0%21s%4d %1000[^\n]s", event_time, &atm_id, event);
 
   message->atm_id = atm_id;
   message->event = malloc(strlen(event));
@@ -40,7 +40,7 @@ int connect_to_svr(int socket, char* ip, uint16_t port) {
         perror("Conexión con el servidor fallida. \n \n");
         return 0;
     }
-     
+
     puts("Conexión con el servidor exitosa.\n");
     return 1;
 }
@@ -56,18 +56,18 @@ int main(int argc, char *argv[]) {
 
   while ((option = getopt(argc, argv,"d:p:l:")) != -1) {
     switch (option) {
-       case 'd' : 
+       case 'd' :
           dir_flag = 1;
           dir =  optarg;
           break;
-       case 'p' : 
+       case 'p' :
           port_flag = 1;
           port = atoi (optarg);
           break;
-       case 'l' : 
-          port_client = atoi (optarg); 
+       case 'l' :
+          port_client = atoi (optarg);
           break;
-       default:  
+       default:
            break;
     }
   }
@@ -77,20 +77,20 @@ int main(int argc, char *argv[]) {
     printf("Argumentos insuficientes.\n");
     return 1;
   }
-  
+
 
   // Creación de la conexión del cliente
   int socket_descr;
 
   socket_descr = socket(AF_INET , SOCK_STREAM , 0);
-  
+
   if (socket_descr == -1)
   {
       printf("Error creando el socket.");
   }
   printf("Socket creado correctamente.\n\n" );
-  
-  // Si se quiere probar sin necesidad de un servidor, 
+
+  // Si se quiere probar sin necesidad de un servidor,
   // colocar if (1) {...} en vez de if(connect_to_...){...}
   if (connect_to_svr(socket_descr, dir, port))
   {
@@ -103,14 +103,14 @@ int main(int argc, char *argv[]) {
 
       //send_atm_message(&message, socket_descr); // Falta implementar
 
-      
+
       // Enviar información al servidor
       if( send(socket_descr, message.event , strlen(message.event) , 0) < 0)
       {
           puts("Falló el envío del mensaje al servidor.");
           return 1;
       }
-       
+
       // Recibir información del servidor
       if( recv(socket_descr, server_reply, 2000 , 0) < 0)
       {
