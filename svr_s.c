@@ -38,11 +38,21 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
+  // Apertura del archivo
 
+  FILE *f = fopen(dir, "w");
+
+  if (f == NULL)
+  {
+      printf("Error abriendo el archivo especificado.\n");
+      exit(1);
+  }
+
+
+  // Creación de la conexión del cliente
   int socket_desc , client_sock , c , *new_sock;
   struct sockaddr_in server , client;
    
-  // Creación de la conexión del cliente
   socket_desc = socket(AF_INET , SOCK_STREAM , 0);
   if (socket_desc == -1)
   {
