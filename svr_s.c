@@ -8,6 +8,13 @@
  
 //the thread function
 void *connection_handler(void *);
+
+// Estructura para almacenar la información del hilo
+
+typedef struct argument {
+    int *socket;
+    FILE *f;
+} argument;
  
 int main(int argc, char *argv[]) {
   char *dir; // dirección ip del servidor a conectarse
@@ -37,6 +44,7 @@ int main(int argc, char *argv[]) {
     printf("Argumentos insuficientes.\n");
     return 1;
   }
+
 
   // Apertura del archivo
 
@@ -83,12 +91,18 @@ int main(int argc, char *argv[]) {
   while( (client_sock = accept(socket_desc, (struct sockaddr *)&client, (socklen_t*)&c)) )
   {
       puts("Conexión establecida");
-       
+    
       pthread_t sniffer_thread;
       new_sock = malloc(1);
       *new_sock = client_sock;
-       
-      if( pthread_create( &sniffer_thread , NULL ,  connection_handler , (void*) new_sock) < 0)
+      
+      argument args;
+
+      args.socket = new_sock;
+      args.f = f;
+
+
+      if( pthread_create( &sniffer_thread , NULL ,  connection_handler , &args) < 0)
       {
           perror("Error creando el hilo");
           return 1;
@@ -114,13 +128,17 @@ int main(int argc, char *argv[]) {
 /*
  * Manejador de la conexión con el cliente
  * */
-void *connection_handler(void *socket_desc)
+void *connection_handler(void *argumento)
 {
     // Descriptor del socket
-    int sock = *(int*)socket_desc;
+    argument *args  = (argument*) argumento;
+    int sock = *(int*)args->socket;
     int read_size;
     char *message , client_message[2000];
      
+    //const char *text = "Write this to the file";
+    //fprintf(f, "Some text: %s\n", text);
+
     // Envía notificación de que el servidor espera un mensaje
     message = "Servidor en espera de mensaje...\n";
     write(sock , message , strlen(message));
@@ -143,7 +161,7 @@ void *connection_handler(void *socket_desc)
     }
          
     // Libera el apuntador al socket
-    free(socket_desc);
+    free(args->socket);
      
     return 0;
 }
