@@ -11,13 +11,15 @@ void *connection_handler(void *);
 
 // Estructura para almacenar la información del hilo
 
+FILE *f;
+char *dir;
+
 typedef struct argument {
     int *socket;
-    FILE *f;
 } argument;
  
 int main(int argc, char *argv[]) {
-  char *dir; // dirección ip del servidor a conectarse
+  //char *dir; // dirección ip del servidor a conectarse
   int port; // puerto del servidor a conectarse
   int option = 0; // variable utilizada por getopt
   int log_flag = 0; // banderas utilizadas para saber si se introdujo la cantidad correcta de argumentos
@@ -48,13 +50,15 @@ int main(int argc, char *argv[]) {
 
   // Apertura del archivo
 
-  FILE *f = fopen(dir, "w");
 
-  if (f == NULL)
+  f = fopen(dir, "w");
+
+
+  /*if (f == NULL)
   {
       printf("Error abriendo el archivo especificado.\n");
       exit(1);
-  }
+  }*/
 
 
   // Creación de la conexión del cliente
@@ -99,7 +103,7 @@ int main(int argc, char *argv[]) {
       argument args;
 
       args.socket = new_sock;
-      args.f = f;
+      //args.f = f;
 
 
       if( pthread_create( &sniffer_thread , NULL ,  connection_handler , &args) < 0)
@@ -135,10 +139,10 @@ void *connection_handler(void *argumento)
     int sock = *(int*)args->socket;
     int read_size;
     char *message , client_message[2000];
-     
-    //const char *text = "Write this to the file";
-    //fprintf(f, "Some text: %s\n", text);
 
+    //const char *text = "Write this to the file";
+    fprintf(f, "Some text: ");
+    fclose(f);
     // Envía notificación de que el servidor espera un mensaje
     message = "Servidor en espera de mensaje...\n";
     write(sock , message , strlen(message));
@@ -161,7 +165,7 @@ void *connection_handler(void *argumento)
     }
          
     // Libera el apuntador al socket
-    free(args->socket);
+    free(args);
      
     return 0;
 }
