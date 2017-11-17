@@ -101,7 +101,7 @@ int listen_svr(int port, char* fn) {
        
       // Se hace un join de los hilos para evitar que la ejecución del programa termine antes que
       // la de los hilos
-      pthread_join( sniffer_thread , NULL);
+      //pthread_join( sniffer_thread , NULL);
       puts("Hilo asignado correctamente");
   }
    
@@ -136,6 +136,7 @@ void *connection_handler(void *argumento)
         // Envía mensaje de confirmación al cliente
         write(sock , "Mensaje recibido.", strlen("Mensaje recibido."));
         fprintf(f, "Raw message: %s\n", client_message); // Escribir en el log cuando se reciba el mensaje
+        fflush(f);
     }
      
     if(read_size == 0)
