@@ -5,26 +5,14 @@
 #include<arpa/inet.h> //inet_addr
 #include<unistd.h>    //write
 #include<pthread.h> //for threading , link with lpthread
- 
-//the thread function
-void *connection_handler(void *);
+#include "svr_s.h"
 
-// Estructura para almacenar la información del hilo
-
-FILE *f;
-char *dir;
-
-typedef struct argument {
-    int *socket;
-} argument;
- 
 int main(int argc, char *argv[]) {
-  //char *dir; // dirección ip del servidor a conectarse
+  char *dir; // dirección ip del servidor a conectarse
   int port; // puerto del servidor a conectarse
   int option = 0; // variable utilizada por getopt
   int log_flag = 0; // banderas utilizadas para saber si se introdujo la cantidad correcta de argumentos
   int dir_flag = 0;
-  char server_reply[2000];
 
   while ((option = getopt(argc, argv,"l:b:")) != -1) {
     switch (option) {
@@ -41,25 +29,26 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  if (log_flag && dir_flag){} // continue
-  else {
+  if (!log_flag || !dir_flag) {
     printf("Argumentos insuficientes.\n");
     return 1;
   }
+  
+  // Ejecutar el servidor, si este termina con un codigo de error, es devuelto
+  return listen_svr(port, dir);
+}
 
+int listen_svr(int port, char* fn) {
 
-  // Apertura del archivo
+  // Apertura del archivo en modo append para que se mantengan los logs de ejecuciones anteriores
+  FILE *f = fopen(fn, "a");
+  // Hace que sea unbuffered, asi cuando se escriba se hace de inmediato
+  setbuf(f, NULL);
 
-
-  f = fopen(dir, "w");
-
-
-  /*if (f == NULL)
-  {
-      printf("Error abriendo el archivo especificado.\n");
-      exit(1);
-  }*/
-
+  if (f == NULL) {
+    printf("Error abriendo el archivo especificado.\n");
+    exit(1);
+  }
 
   // Creación de la conexión del cliente
   int socket_desc , client_sock , c , *new_sock;
@@ -86,7 +75,7 @@ int main(int argc, char *argv[]) {
   puts("Asociación creada exitosamente.");
    
   // Escucha las peticiones de los clientes
-  listen(socket_desc , 3);
+  listen(socket_desc , MAX_CONNECTIONS);
    
   // Aceptar conexiones entrantes
   puts("Waiting for incoming connections...");
@@ -97,13 +86,11 @@ int main(int argc, char *argv[]) {
       puts("Conexión establecida");
     
       pthread_t sniffer_thread;
-      new_sock = malloc(1);
-      *new_sock = client_sock;
       
       argument args;
 
-      args.socket = new_sock;
-      //args.f = f;
+      args.socket = client_sock; // no es necesario hacer malloc, client_sock es un int, pasamos ese int
+      args.f = f;
 
 
       if( pthread_create( &sniffer_thread , NULL ,  connection_handler , &args) < 0)
@@ -123,11 +110,9 @@ int main(int argc, char *argv[]) {
       perror("Conexión aceptada correctamente");
       return 1;
   }
-   
+
   return 0;
-
 }
-
 
 /*
  * Manejador de la conexión con el cliente
@@ -136,13 +121,11 @@ void *connection_handler(void *argumento)
 {
     // Descriptor del socket
     argument *args  = (argument*) argumento;
-    int sock = *(int*)args->socket;
+    int sock = args->socket;
+    FILE* f = args->f;
     int read_size;
     char *message , client_message[2000];
 
-    //const char *text = "Write this to the file";
-    fprintf(f, "Some text: ");
-    fclose(f);
     // Envía notificación de que el servidor espera un mensaje
     message = "Servidor en espera de mensaje...\n";
     write(sock , message , strlen(message));
@@ -152,6 +135,7 @@ void *connection_handler(void *argumento)
     {
         //Send the message back to client
         write(sock , "Mensaje recibido.", strlen("Mensaje recibido."));
+        fprintf(f, "Raw message: %s\n", client_message); // Escribir en el log cuando se reciba el mensaje
     }
      
     if(read_size == 0)
@@ -163,9 +147,6 @@ void *connection_handler(void *argumento)
     {
         perror("recv failed");
     }
-         
-    // Libera el apuntador al socket
-    free(args);
      
     return 0;
 }
