@@ -61,11 +61,17 @@ int listen_svr(int port, char* fn) {
   }
   puts("Socket creado correctamente.\n");
    
-  // Se llena la estructura con la información correspondiente
+  // Se llena la estructura del servidor con la información correspondiente
   server.sin_family = AF_INET;
   server.sin_addr.s_addr = INADDR_ANY;
   server.sin_port = htons( (intptr_t)port );
    
+  // Se establece la información correspondiente al timeout de la conexión
+  struct timeval tv;
+  tv.tv_sec = 300; // 5 minutos de Timeout (60 segs * 5)
+  tv.tv_usec = 0;        
+  setsockopt(socket_desc, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv,sizeof(struct timeval));
+
   // Binding
   if( bind(socket_desc,(struct sockaddr *)&server , sizeof(server)) < 0)
   {
@@ -138,6 +144,8 @@ void *connection_handler(void *argumento)
         fprintf(f, "Raw message: %s\n", client_message); // Escribir en el log cuando se reciba el mensaje
         fflush(f);
     }
+
+    //printf("me sali por lento\n");
      
     if(read_size == 0)
     {
@@ -146,7 +154,9 @@ void *connection_handler(void *argumento)
     }
     else if(read_size == -1)
     {
-        perror("recv failed");
+        fprintf(f, "Raw message: Tiempo limite excedido\n"); // Escribir en el log cuando no se recibe un mensaje en el tiempo limite
+        fflush(f);
+        //perror("Tiempo limite excedido.");
     }
      
     return 0;
