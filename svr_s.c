@@ -59,7 +59,7 @@ int listen_svr(int port, char* fn) {
   {
       printf("Error creando el socket.");
   }
-  puts("Socket creado correctamente.\n\n");
+  puts("Socket creado correctamente.\n");
    
   // Se llena la estructura con la información correspondiente
   server.sin_family = AF_INET;
@@ -78,7 +78,7 @@ int listen_svr(int port, char* fn) {
   listen(socket_desc , MAX_CONNECTIONS);
    
   // Aceptar conexiones entrantes
-  puts("Waiting for incoming connections...");
+  puts("Esperando por conexiones entrantes...");
   c = sizeof(struct sockaddr_in);
    
   while( (client_sock = accept(socket_desc, (struct sockaddr *)&client, (socklen_t*)&c)) )
@@ -89,7 +89,7 @@ int listen_svr(int port, char* fn) {
       
       argument args;
 
-      args.socket = client_sock; // no es necesario hacer malloc, client_sock es un int, pasamos ese int
+      args.socket = client_sock; 
       args.f = f;
 
 
@@ -99,8 +99,8 @@ int listen_svr(int port, char* fn) {
           return 1;
       }
        
-      //Now join the thread , so that we dont terminate before the thread
-      // Esto estaba originalmente comentado
+      // Se hace un join de los hilos para evitar que la ejecución del programa termine antes que
+      // la de los hilos
       pthread_join( sniffer_thread , NULL);
       puts("Hilo asignado correctamente");
   }
@@ -133,7 +133,7 @@ void *connection_handler(void *argumento)
     // Recibir un mensaje del cliente
     while( (read_size = recv(sock , client_message , 2000 , 0)) > 0 )
     {
-        //Send the message back to client
+        // Envía mensaje de confirmación al cliente
         write(sock , "Mensaje recibido.", strlen("Mensaje recibido."));
         fprintf(f, "Raw message: %s\n", client_message); // Escribir en el log cuando se reciba el mensaje
     }
