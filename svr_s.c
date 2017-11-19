@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
     printf("Argumentos insuficientes.\n");
     return 1;
   }
-  
+
   // Ejecutar el servidor, si este termina con un codigo de error, es devuelto
   return listen_svr(port, dir);
 }
@@ -66,19 +66,25 @@ int listen_svr(int port, char* fn) {
   // Creación de la conexión del cliente
   int socket_desc , client_sock , c , *new_sock;
   struct sockaddr_in server , client;
-   
+
   socket_desc = socket(AF_INET , SOCK_STREAM , 0);
   if (socket_desc == -1)
   {
       printf("Error creando el socket.");
   }
-  puts("Socket creado correctamente.\n\n");
-   
-  // Se llena la estructura con la información correspondiente
+  puts("Socket creado correctamente.\n");
+
+  // Se llena la estructura del servidor con la información correspondiente
   server.sin_family = AF_INET;
   server.sin_addr.s_addr = INADDR_ANY;
   server.sin_port = htons( (intptr_t)port );
-   
+
+  // Se establece la información correspondiente al timeout de la conexión
+  struct timeval tv;
+  tv.tv_sec = 300; // 5 minutos de Timeout (60 segs * 5)
+  tv.tv_usec = 0;
+  setsockopt(socket_desc, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv,sizeof(struct timeval));
+
   // Binding
   if( bind(socket_desc,(struct sockaddr *)&server , sizeof(server)) < 0)
   {
@@ -86,23 +92,23 @@ int listen_svr(int port, char* fn) {
       return 1;
   }
   puts("Asociación creada exitosamente.");
-   
+
   // Escucha las peticiones de los clientes
   listen(socket_desc , MAX_CONNECTIONS);
-   
+
   // Aceptar conexiones entrantes
-  puts("Waiting for incoming connections...");
+  puts("Esperando por conexiones entrantes...");
   c = sizeof(struct sockaddr_in);
-   
+
   while( (client_sock = accept(socket_desc, (struct sockaddr *)&client, (socklen_t*)&c)) )
   {
       puts("Conexión establecida");
-    
+
       pthread_t sniffer_thread;
-      
+
       argument args;
 
-      args.socket = client_sock; // no es necesario hacer malloc, client_sock es un int, pasamos ese int
+      args.socket = client_sock;
       args.f = f;
 
 
@@ -111,13 +117,13 @@ int listen_svr(int port, char* fn) {
           perror("Error creando el hilo");
           return 1;
       }
-       
-      //Now join the thread , so that we dont terminate before the thread
-      // Esto estaba originalmente comentado
-      pthread_join( sniffer_thread , NULL);
+
+      // Se hace un join de los hilos para evitar que la ejecución del programa termine antes que
+      // la de los hilos
+      //pthread_join( sniffer_thread , NULL);
       puts("Hilo asignado correctamente");
   }
-   
+
   if (client_sock < 0)
   {
       perror("Conexión aceptada correctamente");
@@ -155,26 +161,26 @@ void *connection_handler(void *argumento)
     // Recibir un mensaje del cliente
     while( (read_size = recv(sock , client_message , 2000 , 0)) > 0 )
     {
-        //Send the message back to client
+        // Envía mensaje de confirmación al cliente
         write(sock , "Mensaje recibido.", strlen("Mensaje recibido."));
-        //Obtener codigo y patron del evento 
+        //Obtener codigo y patron del evento
         int codigo = 0;
         char *patron;
 
-        if (strstr(client_message, "Communication Offline")) 
+        if (strstr(client_message, "Communication Offline"))
         {
           patron = "Communication Offline";
           codigo = 1;
-        } 
+        }
         else if (strstr(client_message, "Communication error"))
         {
           patron = "Communication error";
-          codigo = 2;  
+          codigo = 2;
         }
         else if (strstr(client_message, "Low cash alert"))
         {
           patron = "Low cash alert";
-          codigo = 3;        
+          codigo = 3;
         }
         else if (strstr(client_message, "Running Out of notes is casette"))
         {
@@ -184,17 +190,17 @@ void *connection_handler(void *argumento)
         else if (strstr(client_message, "empty"))
         {
           patron = "empty";
-          codigo = 5;        
+          codigo = 5;
         }
         else if (strstr(client_message, "Service mode entered"))
         {
           patron = "Service mode entered";
-          codigo = 6;  
+          codigo = 6;
         }
         else if (strstr(client_message, "Service mode left"))
         {
           patron = "Service mode left";
-          codigo = 7;        
+          codigo = 7;
         }
         else if (strstr(client_message, "device did not answer as expected"))
         {
@@ -204,7 +210,7 @@ void *connection_handler(void *argumento)
         else if (strstr(client_message, "The protocol was cancelled"))
         {
           patron = "The protocol was cancelled";
-          codigo = 9;        
+          codigo = 9;
         }
         else if (strstr(client_message, "Low Paper warning"))
         {
@@ -214,20 +220,20 @@ void *connection_handler(void *argumento)
         else if (strstr(client_message, "Printer Error"))
         {
           patron = "Printer Error";
-          codigo = 11;        
+          codigo = 11;
         }
         else if (strstr(client_message, "Paper-out condition"))
         {
           patron = "Paper-out condition";
-          codigo = 12;        
+          codigo = 12;
         }
-        else 
+        else
         {
           patron = " ";
         }
 
         if (strcmp (patron, " ") == 0) {
-          fprintf(args->f, "%s %d %s \n", fecha, idATM, client_message);          
+          fprintf(args->f, "%s %d %s \n", fecha, idATM, client_message);
         }
         else {
           fprintf(args->f, "%s %d %d %s %s \n", fecha, idATM, codigo, patron, client_message);
@@ -237,7 +243,9 @@ void *connection_handler(void *argumento)
 
         //fprintf(f, "Raw message: %s\n", client_message); // Escribir en el log cuando se reciba el mensaje
     }
-     
+
+    //printf("me sali por lento\n");
+
     if(read_size == 0)
     {
         puts("Cliente desconectado.");
@@ -245,8 +253,10 @@ void *connection_handler(void *argumento)
     }
     else if(read_size == -1)
     {
-        perror("recv failed");
+        fprintf(f, "Raw message: Tiempo limite excedido\n"); // Escribir en el log cuando no se recibe un mensaje en el tiempo limite
+        fflush(f);
+        //perror("Tiempo limite excedido.");
     }
-     
+
     return 0;
 }
