@@ -97,6 +97,15 @@ int main(int argc, char *argv[]) {
     while (1) {
       atm_message message;
       read_atm_message(&message);
+
+			//printf("Holaa\n");
+			if(strstr(message.event, "EXIT_0")) {
+				printf("Conexión finalizada.\n");
+				close(socket_descr);
+				return 0;
+			}
+			//printf("Hola de nuevo: %s\n", message.event);
+
       printf("ATM ID: %d\n", message.atm_id);
       printf("TIMESTAMP: %ld\n", message.timestamp);
       printf("EVENT: %s\n", message.event);
