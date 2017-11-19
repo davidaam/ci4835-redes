@@ -2,10 +2,15 @@
 #include<string.h>    //strlen
 #include<stdlib.h>    //strlen
 #include<sys/socket.h>
+#include<sys/types.h>
+#include<sys/syscall.h>
 #include<arpa/inet.h> //inet_addr
 #include<unistd.h>    //write
 #include<pthread.h> //for threading , link with lpthread
+#include<regex.h>
 #include "svr_s.h"
+
+
 
 int main(int argc, char *argv[]) {
   char *dir; // dirección ip del servidor a conectarse
@@ -37,6 +42,14 @@ int main(int argc, char *argv[]) {
   // Ejecutar el servidor, si este termina con un codigo de error, es devuelto
   return listen_svr(port, dir);
 }
+
+/*void compilar_regex() {
+  reti = regcomp(&regex, "[a-zA-Z0-9]", 0);
+  if (reti) {
+      fprintf(stderr, "Could not compile regex\n");
+      exit(1);
+  }
+}*/
 
 int listen_svr(int port, char* fn) {
 
@@ -130,12 +143,99 @@ void *connection_handler(void *argumento)
     message = "Servidor en espera de mensaje...\n";
     write(sock , message , strlen(message));
 
+    //Para obtener fecha
+    time_t tiempo = time(NULL);
+    struct tm *structTiempo = localtime(&tiempo);
+    char fecha[128];
+    strftime(fecha,128,"%d/%m/%y %H:%M:%S",structTiempo); //Guarda la fecha como string
+
+    //Obtener identificacion del ATM
+    pid_t idATM = syscall(SYS_gettid);
+
     // Recibir un mensaje del cliente
     while( (read_size = recv(sock , client_message , 2000 , 0)) > 0 )
     {
         //Send the message back to client
         write(sock , "Mensaje recibido.", strlen("Mensaje recibido."));
-        fprintf(f, "Raw message: %s\n", client_message); // Escribir en el log cuando se reciba el mensaje
+        //Obtener codigo y patron del evento 
+        int codigo = 0;
+        char *patron;
+
+        if (strstr(client_message, "Communication Offline")) 
+        {
+          patron = "Communication Offline";
+          codigo = 1;
+        } 
+        else if (strstr(client_message, "Communication error"))
+        {
+          patron = "Communication error";
+          codigo = 2;  
+        }
+        else if (strstr(client_message, "Low cash alert"))
+        {
+          patron = "Low cash alert";
+          codigo = 3;        
+        }
+        else if (strstr(client_message, "Running Out of notes is casette"))
+        {
+          patron = "Running Out of notes is casette";
+          codigo = 4;
+        }
+        else if (strstr(client_message, "empty"))
+        {
+          patron = "empty";
+          codigo = 5;        
+        }
+        else if (strstr(client_message, "Service mode entered"))
+        {
+          patron = "Service mode entered";
+          codigo = 6;  
+        }
+        else if (strstr(client_message, "Service mode left"))
+        {
+          patron = "Service mode left";
+          codigo = 7;        
+        }
+        else if (strstr(client_message, "device did not answer as expected"))
+        {
+          patron = "device did not answer as expected";
+          codigo = 8;
+        }
+        else if (strstr(client_message, "The protocol was cancelled"))
+        {
+          patron = "The protocol was cancelled";
+          codigo = 9;        
+        }
+        else if (strstr(client_message, "Low Paper warning"))
+        {
+          patron = "Low Paper warning";
+          codigo;
+        }
+        else if (strstr(client_message, "Printer Error"))
+        {
+          patron = "Printer Error";
+          codigo = 11;        
+        }
+        else if (strstr(client_message, "Paper-out condition"))
+        {
+          patron = "Paper-out condition";
+          codigo = 12;        
+        }
+        else 
+        {
+          patron = " ";
+        }
+
+        if (strcmp (patron, " ") == 0) {
+          fprintf(args->f, "%s %d %s \n", fecha, idATM, client_message);          
+        }
+        else {
+          fprintf(args->f, "%s %d %d %s %s \n", fecha, idATM, codigo, patron, client_message);
+        }
+
+        fflush(args->f);
+
+        //fprintf(f, "Raw message: %s\n", client_message); // Escribir en el log cuando se reciba el mensaje
     }
      
     if(read_size == 0)
