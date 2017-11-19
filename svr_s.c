@@ -43,14 +43,6 @@ int main(int argc, char *argv[]) {
   return listen_svr(port, dir);
 }
 
-/*void compilar_regex() {
-  reti = regcomp(&regex, "[a-zA-Z0-9]", 0);
-  if (reti) {
-      fprintf(stderr, "Could not compile regex\n");
-      exit(1);
-  }
-}*/
-
 int listen_svr(int port, char* fn) {
 
   // Apertura del archivo en modo append para que se mantengan los logs de ejecuciones anteriores
@@ -240,11 +232,7 @@ void *connection_handler(void *argumento)
         }
 
         fflush(args->f);
-
-        //fprintf(f, "Raw message: %s\n", client_message); // Escribir en el log cuando se reciba el mensaje
     }
-
-    //printf("me sali por lento\n");
 
     if(read_size == 0)
     {
@@ -255,7 +243,6 @@ void *connection_handler(void *argumento)
     {
         fprintf(f, "Raw message: Tiempo limite excedido\n"); // Escribir en el log cuando no se recibe un mensaje en el tiempo limite
         fflush(f);
-        //perror("Tiempo limite excedido.");
     }
 
     return 0;
