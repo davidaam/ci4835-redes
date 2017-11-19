@@ -45,6 +45,25 @@ int connect_to_svr(int socket, char* ip, uint16_t port) {
     return 1;
 }
 
+int send_atm_message(atm_message* message, int socket_descr){
+	char server_reply[2000];
+
+	if( send(socket_descr, message->event , strlen(message->event) , 0) < 0)
+	{
+			puts("Falló el envío del mensaje al servidor.");
+			return 1;
+	}
+
+	// Recibir información del servidor
+	if( recv(socket_descr, server_reply, 2000 , 0) < 0)
+	{
+			puts("Fallo al recibir respuesta del servidor.");
+	}
+
+	puts("Respuesta del servidor :");
+	puts(server_reply);
+}
+
 int main(int argc, char *argv[]) {
   char *dir; // dirección ip del servidor a conectarse
   int port; // puerto del servidor a conectarse
@@ -52,7 +71,6 @@ int main(int argc, char *argv[]) {
   int option = 0; // variable utilizada por getopt
   int port_flag = 0; // banderas utilizadas para saber si se introdujo la cantidad correcta de argumentos
   int dir_flag = 0;
-  char server_reply[2000];
 
   while ((option = getopt(argc, argv,"d:p:l:")) != -1) {
     switch (option) {
@@ -98,13 +116,11 @@ int main(int argc, char *argv[]) {
       atm_message message;
       read_atm_message(&message);
 
-			//printf("Holaa\n");
 			if(strstr(message.event, "EXIT_0")) {
 				printf("Conexión finalizada.\n");
 				close(socket_descr);
 				return 0;
 			}
-			//printf("Hola de nuevo: %s\n", message.event);
 
       printf("ATM ID: %d\n", message.atm_id);
       printf("TIMESTAMP: %ld\n", message.timestamp);
@@ -114,21 +130,7 @@ int main(int argc, char *argv[]) {
 
 
       // Enviar información al servidor
-      if( send(socket_descr, message.event , strlen(message.event) , 0) < 0)
-      {
-          puts("Falló el envío del mensaje al servidor.");
-          return 1;
-      }
-
-      // Recibir información del servidor
-      if( recv(socket_descr, server_reply, 2000 , 0) < 0)
-      {
-          puts("Fallo al recibir respuesta del servidor.");
-          break;
-      }
-
-      puts("Respuesta del servidor :");
-      puts(server_reply);
+			send_atm_message(&message, socket_descr);
     }
   }
 
