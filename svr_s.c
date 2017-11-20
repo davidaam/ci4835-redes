@@ -211,7 +211,7 @@ void *connection_handler(void *argumento)
         else if (strstr(client_message, "Low Paper warning"))
         {
           patron = "Low Paper warning";
-          codigo;
+          codigo = 10;
         }
         else if (strstr(client_message, "Printer Error"))
         {
