@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 #include "svr_c.h"
 #include <sys/socket.h>    //socket
 #include <arpa/inet.h> //inet_addr
