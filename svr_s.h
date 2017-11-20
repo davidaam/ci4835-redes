@@ -23,4 +23,7 @@ int listen_svr(int port, char* fn);
  */
 void* connection_handler(void* arguments);
 
+/**/
+void get_email_address();
+
 const int MAX_CONNECTIONS = 1000;

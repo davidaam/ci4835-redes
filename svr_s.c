@@ -10,7 +10,7 @@
 #include<regex.h>
 #include "svr_s.h"
 
-
+char email[255]; // almacena la direccion de email a donde se enviaran las notificaciones
 
 int main(int argc, char *argv[]) {
   char *dir; // dirección ip del servidor a conectarse
@@ -18,6 +18,7 @@ int main(int argc, char *argv[]) {
   int option = 0; // variable utilizada por getopt
   int log_flag = 0; // banderas utilizadas para saber si se introdujo la cantidad correcta de argumentos
   int dir_flag = 0;
+
 
   while ((option = getopt(argc, argv,"l:b:")) != -1) {
     switch (option) {
@@ -39,11 +40,17 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
+	// Obtiene la direccion de email a ser utilizada
+	get_email_address();
+
+	printf("%s\n", email);
+
   // Ejecutar el servidor, si este termina con un codigo de error, es devuelto
   return listen_svr(port, dir);
 }
 
 int listen_svr(int port, char* fn) {
+
 
   // Apertura del archivo en modo append para que se mantengan los logs de ejecuciones anteriores
   FILE *f = fopen(fn, "a");
@@ -246,4 +253,20 @@ void *connection_handler(void *argumento)
     }
 
     return 0;
+}
+
+
+void get_email_address() {
+	FILE *fp; // file descriptor para abrir el archivo que contiene el correo electronico
+	fp = fopen("agenda.txt","r");
+
+	if( fp == NULL )
+	{
+		perror("Error abriendo el archivo con la dirección de correo electrónico.\n");
+		exit(EXIT_FAILURE);
+	}
+
+	while(fgets(email, 255, (FILE*) fp)) {} // Lee el contenido del archivo que contiene la dirección de email
+
+	fclose(fp);
 }
