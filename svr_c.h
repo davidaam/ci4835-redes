@@ -32,3 +32,12 @@ int send_atm_message(atm_message* message, int socket);
  * @return int   File descriptor del socket
  */
 int connect_to_svr(int socket, char* ip, uint16_t port);
+
+/**
+ * Establecer puerto local en el cliente
+ *
+ * @param  socket  File descriptor del socket
+ * @param  port    Puerto del cliente
+ * @return int     -1 si hubo error, 1 en caso de que sea exitoso.
+ */
+int bind_local_port(int socket_descr, uint16_t port);

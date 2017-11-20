@@ -5,8 +5,9 @@
 #include <time.h>
 #include <unistd.h>
 #include "svr_c.h"
-#include <sys/socket.h>    //socket
-#include <arpa/inet.h> //inet_addr
+#include <sys/socket.h> // socket
+#include <arpa/inet.h> // inet_addr
+#include <netdb.h> // gethostbyname
 
 atm_message* read_atm_message(atm_message* message) {
   printf("\n");
@@ -30,6 +31,15 @@ atm_message* read_atm_message(atm_message* message) {
   return message;
 }
 
+int bind_local_port(int socket_descr, uint16_t port) {
+  struct sockaddr_in local_addr;
+
+  local_addr.sin_family = AF_INET;
+  local_addr.sin_port = htons(port);
+  
+  return bind(socket_descr, (struct sockaddr *)&local_addr, sizeof(local_addr));
+}
+
 int connect_to_svr(int socket, char* ip, uint16_t port) {
   struct sockaddr_in socket_dir;
   socket_dir.sin_addr.s_addr = inet_addr(ip);
@@ -43,6 +53,16 @@ int connect_to_svr(int socket, char* ip, uint16_t port) {
     }
 
     puts("Conexión con el servidor exitosa.\n");
+
+    // Chequear que puerto se asignó en el cliente
+    struct sockaddr_in sockaddr;
+    int sockaddr_len = sizeof(sockaddr);
+    if (getsockname(socket,(struct sockaddr *)&sockaddr,(socklen_t *)&sockaddr_len) == -1) {
+        perror("getsockname");
+        return -1;
+    } else {
+      printf("El puerto local es: %d\n", (int) ntohs(sockaddr.sin_port));
+    }
     return 1;
 }
 
@@ -71,6 +91,7 @@ int main(int argc, char *argv[]) {
   int port_client; // puerto del cliente
   int option = 0; // variable utilizada por getopt
   int port_flag = 0; // banderas utilizadas para saber si se introdujo la cantidad correcta de argumentos
+  int port_client_flag = 0;
   int dir_flag = 0;
 
   while ((option = getopt(argc, argv,"d:p:l:")) != -1) {
@@ -84,6 +105,7 @@ int main(int argc, char *argv[]) {
           port = atoi (optarg);
           break;
        case 'l' :
+          port_client_flag = 1;
           port_client = atoi (optarg);
           break;
        default:
@@ -91,8 +113,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  if (port_flag && dir_flag){} // continue
-  else {
+  if (!(port_flag && dir_flag)) {
     printf("Argumentos insuficientes.\n");
     return 1;
   }
@@ -108,6 +129,14 @@ int main(int argc, char *argv[]) {
       printf("Error creando el socket.");
   }
   printf("Socket creado correctamente.\n\n" );
+
+  if (port_client_flag) {
+    // Si se especifica un puerto local, se hace bind de este puerto
+    if (bind_local_port(socket_descr, port_client) == -1) {
+      perror("Error haciendo bind del puerto de cliente especificado\n");
+      return -1;
+    }
+  }
 
   // Si se quiere probar sin necesidad de un servidor,
   // colocar if (1) {...} en vez de if(connect_to_...){...}
@@ -126,9 +155,6 @@ int main(int argc, char *argv[]) {
       printf("ATM ID: %d\n", message.atm_id);
       printf("TIMESTAMP: %ld\n", message.timestamp);
       printf("EVENT: %s\n", message.event);
-
-      //send_atm_message(&message, socket_descr); // Falta implementar
-
 
       // Enviar información al servidor
 			send_atm_message(&message, socket_descr);
