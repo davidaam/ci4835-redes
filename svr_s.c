@@ -43,8 +43,6 @@ int main(int argc, char *argv[]) {
 	// Obtiene la direccion de email a ser utilizada
 	get_email_address();
 
-	printf("%s\n", email);
-
   // Ejecutar el servidor, si este termina con un codigo de error, es devuelto
   return listen_svr(port, dir);
 }
@@ -117,8 +115,6 @@ int listen_svr(int port, char* fn) {
           return 1;
       }
 
-      // Se hace un join de los hilos para evitar que la ejecución del programa termine antes que
-      // la de los hilos
       //pthread_join( sniffer_thread , NULL);
       puts("Hilo asignado correctamente");
   }
@@ -143,6 +139,7 @@ void *connection_handler(void *argumento)
     FILE* f = args->f;
     int read_size;
     char *message , client_message[2000];
+		char cmd[255];
 
     // Envía notificación de que el servidor espera un mensaje
     message = "Servidor en espera de mensaje...\n";
@@ -233,9 +230,13 @@ void *connection_handler(void *argumento)
 
         if (strcmp (patron, " ") == 0) {
           fprintf(args->f, "%s %d %s \n", fecha, idATM, client_message);
+					sprintf(cmd,"echo '%s %d %s \n' | mail -s 'Reporte de operaciones' %s", fecha, idATM, client_message, email);
+					system(cmd);
         }
         else {
           fprintf(args->f, "%s %d %d %s %s \n", fecha, idATM, codigo, patron, client_message);
+					sprintf(cmd,"echo '%s %d %d %s %s \n' | mail -s 'Reporte de operaciones' %s", fecha, idATM, codigo, patron, client_message, email);
+					system(cmd);
         }
 
         fflush(args->f);
@@ -267,6 +268,11 @@ void get_email_address() {
 	}
 
 	while(fgets(email, 255, (FILE*) fp)) {} // Lee el contenido del archivo que contiene la dirección de email
+
+	// Si no hay ninguna dirección de correo en agenda, se coloca una por defecto
+	if(strcmp(email, "\n")) {
+		sprintf(email, "prueba@gmail.com");
+	}
 
 	fclose(fp);
 }

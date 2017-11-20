@@ -23,7 +23,8 @@ int listen_svr(int port, char* fn);
  */
 void* connection_handler(void* arguments);
 
-/**/
+/*Función que se encarga de leer una dirección de correo electrónico desde un archivo de texto
+con nombre 'agenda.txt'*/
 void get_email_address();
 
 const int MAX_CONNECTIONS = 1000;
